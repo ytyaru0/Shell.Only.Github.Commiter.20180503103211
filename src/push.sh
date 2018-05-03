@@ -15,7 +15,8 @@ IsSameRepoName () {
 ExistReadMe () {
     for name in README ReadMe readme Readme; do
         for ext in "" .md .txt; do
-            [ -f "${repo_path}/${name}${ext}" ] && return 0
+            local f="${repo_path}/${name}${ext}"
+            [ -f "$f" ] && { . $(cd $(dirname $0); pwd)/ReadMeReader.sh; description=`ReadDescription "$f"`; return 0; }
         done
     done
     echo "カレントディレクトリに ReadMe.md が存在しません。作成してください。: "${repo_path}
@@ -67,8 +68,12 @@ CreateRepository () {
 CreateRemoteRepository () {
     echo "リモートリポジトリを作成します。"
     #json='{"name":"'${REPO_NAME}'","description":"'${REPO_DESC}'","homepage":"'${REPO_HOME}'"}'it
-    json='{"name":"'${repo_name}'"}'
     #echo $json | curl -u "${username}:${password}" https://api.github.com/user/repos -d @-
+    if [ -z "$description" ] && [ "${description:-A}" = "${description-A}" ]; then
+        json='{"name":"'${repo_name}'"}'
+    else
+        json='{"name":"'${repo_name}'", "description":"'${description}'"}'
+    fi
     local token=`ReadToken $username`
     if [ "$token" == "" ]; then
         echo $json | curl -u "${username}:${password}" https://api.github.com/user/repos -d @-
